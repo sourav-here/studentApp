@@ -1,13 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:image_picker/image_picker.dart';
-// import 'package:student_list/db/functions/db_functions.dart';
-// import 'package:student_list/showstudent.dart';
-// import 'package:student_list/model/data_model.dart';
 import 'liststudent.dart';
-
+import 'bootomsheet.dart';
+// import 'functions.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -113,196 +110,43 @@ class _HomePageState extends State<HomePage> {
       _addressController.text = existingItem['address'];
     }
 
-    showModalBottomSheet(
-        isScrollControlled: true,
-        context: context,
-        elevation: 5,
-        builder: (_) => Container(
-              key: _formkey,
-              decoration: const BoxDecoration(
-                borderRadius: BorderRadius.only(
-                  topRight: Radius.circular(30.0),
-                  topLeft: Radius.circular(30.0),
-                ),
-                color: Color.fromARGB(255, 79, 244, 79),
-              ),
-              height: 750,
-              child: Column(
-                children: [
-                  const SizedBox(
-                    height: 15,
-                  ),
-                  CircleAvatar(
-                    radius: 70,
-                    backgroundImage: _image != null ? FileImage(_image!) : null,
-                    child: _image == null
-                        ? const Icon(
-                            Icons.person,
-                            size: 70,
-                          )
-                        : null,
-                  ),
-                  Positioned(
-                    child: IconButton(
-                      onPressed: getImageFromGallery,
-                      icon: const Icon(Icons.add_a_photo),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 15,
-                  ),
-                  TextFormField(
-                    keyboardType: TextInputType.name,
-                    inputFormatters: <TextInputFormatter>[
-                      FilteringTextInputFormatter(RegExp(r'[a-zA-Z]'),
-                          allow: true)
-                    ],
-                    controller: _nameController,
-                    decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30)),
-                        hintText: 'Name'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Enter Name';
-                      } else {
-                        return null;
-                      }
-                    },
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  TextFormField(
-                    keyboardType: TextInputType.number,
-                    inputFormatters: <TextInputFormatter>[
-                      FilteringTextInputFormatter.digitsOnly
-                    ],
-                    controller: _ageController,
-                    decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30)),
-                        hintText: 'Age'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Enter Age';
-                      } else {
-                        return null;
-                      }
-                    },
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  TextFormField(
-                    keyboardType: TextInputType.phone,
-                    inputFormatters: <TextInputFormatter>[
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(10),
-                    ],
-                    controller: _numberController,
-                    decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30)),
-                        hintText: 'Phone'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Enter Phone number';
-                      } else {
-                        return null;
-                      }
-                    },
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  TextFormField(
-                    controller: _addressController,
-                    decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30),
-                            borderSide: const BorderSide(
-                              color: Colors.black,
-                              width: 50,
-                            )),
-                        hintText: 'Address'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Enter Address';
-                      } else {
-                        return null;
-                      }
-                    },
-                  ),
-                  const SizedBox(
-                    height: 30,
-                  ),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      shape: const StadiumBorder(),
-                      minimumSize: const Size(120, 45),
-                      backgroundColor: Colors.black,
-                    ),
-                    onPressed: () async {
-                      if (itemKey == null) {
-                        saveStudent({
-                          "name": _nameController.text,
-                          'age': _ageController.text,
-                          'number': _numberController.text,
-                          'address': _addressController.text,
-                        });
-                      }
+    BottomSheetWidget.show(
+      context,
+      _image,
+      (File image) {
+        setState(() {
+          _image = image;
+        });
+      },
+      getImageFromGallery,
+      _nameController,
+      _ageController,
+      _numberController,
+      _addressController,
+      _formkey,
+      () {
+        if (itemKey == null) {
+          saveStudent({
+            "name": _nameController.text,
+            'age': _ageController.text,
+            'number': _numberController.text,
+            'address': _addressController.text,
+          });
+        }
 
-                      if (itemKey != null) {
-                        updateStudent(itemKey, {
-                          "name": _nameController.text,
-                          "age": _ageController.text,
-                          "number": _numberController.text,
-                          "address": _addressController.text,
-                        });
-                      }
-
-                      _nameController.text = '';
-                      _ageController.text = '';
-                      _numberController.text = '';
-                      _addressController.text = '';
-
-                      Navigator.of(context).pop();
-                    },
-                    child: Text(
-                      itemKey == null ? 'Create New' : 'Update',
-                      style: const TextStyle(
-                          fontStyle: FontStyle.italic,
-                          fontSize: 20,
-                          color: Color.fromARGB(255, 79, 244, 79)),
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        shape: const StadiumBorder(),
-                        minimumSize: const Size(120, 45),
-                        backgroundColor: Colors.black,
-                      ),
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text(
-                        "Back",
-                        style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            fontSize: 20,
-                            color: Color.fromARGB(255, 79, 244, 79)),
-                      )),
-                ],
-              ),
-            ));
+        if (itemKey != null) {
+          updateStudent(itemKey, {
+            "name": _nameController.text,
+            "age": _ageController.text,
+            "number": _numberController.text,
+            "address": _addressController.text,
+          });
+        }
+      },
+    );
   }
 
   @override
-  // Widget build(BuildContext context) {
-  //   return const Scaffold(
-  //     body: ShowStudent(),
-  //   );
-  // }
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
