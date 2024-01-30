@@ -2,8 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:image_picker/image_picker.dart';
-import 'liststudent.dart';
-import 'bootomsheet.dart';
+import 'studentdetails.dart';
+import 'studentfields.dart';
 // import 'functions.dart';
 
 class HomePage extends StatefulWidget {
