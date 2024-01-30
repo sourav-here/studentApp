@@ -30,6 +30,29 @@ class _HomePageState extends State<HomePage> {
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
 
+  void reprint() {
+    final data = StudentOperations.reprint(studentList);
+
+    setState(() {
+      students = data;
+    });
+  }
+
+  Future<void> saveStudent(Map<String, dynamic> newStudent) async {
+    await StudentOperations.saveStudent(studentList, newStudent);
+    reprint();
+  }
+
+  Future<void> updateStudent(int itemKey, Map<String, dynamic> student) async {
+    await StudentOperations.updateStudent(studentList, itemKey, student);
+    reprint();
+  }
+
+  Future<dynamic> deleteStudent(int index) async {
+    await StudentOperations.deleteStudent(studentList, index);
+    reprint();
+  }
+
   void _toggleSearch() {
     setState(() {
       _isSearch = !_isSearch;
@@ -67,29 +90,6 @@ class _HomePageState extends State<HomePage> {
 
   List<Map<String, dynamic>> students = [];
   final studentList = Hive.box("student_list");
-
-  void reprint() {
-    final data = StudentOperations.reprint(studentList);
-
-    setState(() {
-      students = data;
-    });
-  }
-
-  Future<void> saveStudent(Map<String, dynamic> newStudent) async {
-    await StudentOperations.saveStudent(studentList, newStudent);
-    reprint();
-  }
-
-  Future<void> updateStudent(int itemKey, Map<String, dynamic> student) async {
-    await StudentOperations.updateStudent(studentList, itemKey, student);
-    reprint();
-  }
-
-  Future<dynamic> deleteStudent(int index) async {
-    await StudentOperations.deleteStudent(studentList, index);
-    reprint();
-  }
 
   void display(BuildContext context, int? itemKey) async {
     if (itemKey != null) {
