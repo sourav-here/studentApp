@@ -250,10 +250,10 @@ class _HomePageState extends State<HomePage> {
     return AppBar(
       automaticallyImplyLeading: false,
       backgroundColor: const Color.fromARGB(255, 79, 244, 79),
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back),
-        onPressed: _toggleSearch,
-      ),
+      // leading: IconButton(
+      //   icon: const Icon(Icons.arrow_back),
+      //   onPressed: _toggleSearch,
+      // ),
       title: TextFormField(
         controller: _searchController,
         decoration: const InputDecoration(
