@@ -2,9 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:student_list/db/functions/db_functions.dart';
 import 'studentdetails.dart';
 import 'studentfields.dart';
-// import 'functions.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -69,34 +69,25 @@ class _HomePageState extends State<HomePage> {
   final studentList = Hive.box("student_list");
 
   void reprint() {
-    final data = studentList.keys.map((key) {
-      final student = studentList.get(key);
-      return {
-        "key": key,
-        "name": student['name'],
-        "age": student['age'],
-        "number": student['number'],
-        'address': student['address']
-      };
-    }).toList();
+    final data = StudentOperations.reprint(studentList);
 
     setState(() {
-      students = data.reversed.toList();
+      students = data;
     });
   }
 
   Future<void> saveStudent(Map<String, dynamic> newStudent) async {
-    await studentList.add(newStudent);
+    await StudentOperations.saveStudent(studentList, newStudent);
     reprint();
   }
 
   Future<void> updateStudent(int itemKey, Map<String, dynamic> student) async {
-    await studentList.put(itemKey, student);
+    await StudentOperations.updateStudent(studentList, itemKey, student);
     reprint();
   }
 
   Future<dynamic> deleteStudent(int index) async {
-    await studentList.delete(index);
+    await StudentOperations.deleteStudent(studentList, index);
     reprint();
   }
 
@@ -250,10 +241,6 @@ class _HomePageState extends State<HomePage> {
     return AppBar(
       automaticallyImplyLeading: false,
       backgroundColor: const Color.fromARGB(255, 79, 244, 79),
-      // leading: IconButton(
-      //   icon: const Icon(Icons.arrow_back),
-      //   onPressed: _toggleSearch,
-      // ),
       title: TextFormField(
         controller: _searchController,
         decoration: const InputDecoration(
