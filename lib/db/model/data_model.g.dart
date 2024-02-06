@@ -22,6 +22,7 @@ class StudentModelAdapter extends TypeAdapter<StudentModel> {
       number: fields[2] as int,
       address: fields[3] as String,
       image: fields[4] as String?,
+       key: null,
     );
   }
 

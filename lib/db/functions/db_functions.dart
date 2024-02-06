@@ -1,70 +1,34 @@
+import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:student_list/db/model/data_model.dart';
 
-class StudentOperations {
-  static List<Map<String, dynamic>> reprint(Box studentList) {
-    final data = studentList.keys.map((key) {
-      final student = studentList.get(key);
-      return {
-        "key": key,
-        "name": student['name'],
-        "age": student['age'],
-        "number": student['number'],
-        'address': student['address']
-      };
-    }).toList();
+ValueNotifier<List<StudentModel>> studentListNotifier = ValueNotifier([]);
 
-    return data.reversed.toList();
-  }
 
-  static Future<void> saveStudent(Box studentList, Map<String, dynamic> newStudent) async {
-    await studentList.add(newStudent);
-  }
-
-  static Future<void> updateStudent(Box studentList, int itemKey, Map<String, dynamic> student) async {
-    await studentList.put(itemKey, student);
-  }
-
-  static Future<void> deleteStudent(Box studentList, int index) async {
-    await studentList.delete(index);
-  }
+Future<void> saveStudent(StudentModel value) async {
+  final studentList = await Hive.openBox<StudentModel>('student_list');
+  await studentList.add(value);
 }
 
+Future<void> updateStudent(index, StudentModel value) async {
+  final studentList = await Hive.openBox<StudentModel>('student_list');
+  studentListNotifier.value.clear();
+  studentListNotifier.value.addAll(studentList.values);
 
+  await studentList.putAt(index, value);
+  getStudents();
+}
 
+Future<void> deleteStudent(int index) async {
+  final studentList = await Hive.openBox<StudentModel>('student_list');
+  await studentList.deleteAt(index);
 
+  getStudents();
+}
 
+Future<void> getStudents() async {
+  final studentlist = await Hive.openBox<StudentModel>('Student_list');
+  studentListNotifier.value.clear();
 
-//--------------------------------------------
-
-
- // void reprint() {
-  //   final data = studentList.keys.map((key) {
-  //     final student = studentList.get(key);
-  //     return {
-  //       "key": key,
-  //       "name": student['name'],
-  //       "age": student['age'],
-  //       "number": student['number'],
-  //       'address': student['address']
-  //     };
-  //   }).toList();
-
-  //   setState(() {
-  //     students = data.reversed.toList();
-  //   });
-  // }
-
-  // Future<void> saveStudent(Map<String, dynamic> newStudent) async {
-  //   await saveStudent(newStudent);
-  //   reprint();
-  // }
-
-  // Future<void> updateStudent(int itemKey, Map<String, dynamic> student) async {
-  //   await updateStudent(itemKey, student);
-  //   reprint();
-  // }
-
-  // Future<dynamic> deleteStudent(int index) async {
-  //   await deleteStudent(index);
-  //   reprint();
-  // }
+  studentListNotifier.value.addAll(studentlist.values);
+}

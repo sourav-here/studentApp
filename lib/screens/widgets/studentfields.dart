@@ -151,7 +151,7 @@ class BottomSheetWidget {
                   backgroundColor: Colors.black,
                 ),
                 onPressed: () async {
-                  if (formKey.currentState?.validate() == true) {
+                  if (formKey.currentState!.validate()) {
                     saveOrUpdateStudent();
                     nameController.text = '';
                     ageController.text = '';

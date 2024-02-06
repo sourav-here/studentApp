@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:student_list/db/functions/db_functions.dart';
+import 'package:student_list/db/model/data_model.dart';
 import 'studentdetails.dart';
 import 'studentfields.dart';
 
@@ -14,13 +15,17 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  
   bool _isSearch = false;
   final _formkey = GlobalKey<FormState>();
 
   @override
   void initState() {
+    _nameController.text = widget.name;
+    _ageController.text = widget.age.toString();
+    _numberController.text = widget.number.toString();
+    _addressController.text = widget.address;
     super.initState();
-    reprint();
   }
 
   File? _image;
@@ -30,28 +35,6 @@ class _HomePageState extends State<HomePage> {
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
 
-  void reprint() {
-    final data = StudentOperations.reprint(studentList);
-
-    setState(() {
-      students = data;
-    });
-  }
-
-  Future<void> saveStudent(Map<String, dynamic> newStudent) async {
-    await StudentOperations.saveStudent(studentList, newStudent);
-    reprint();
-  }
-
-  Future<void> updateStudent(int itemKey, Map<String, dynamic> student) async {
-    await StudentOperations.updateStudent(studentList, itemKey, student);
-    reprint();
-  }
-
-  Future<dynamic> deleteStudent(int index) async {
-    await StudentOperations.deleteStudent(studentList, index);
-    reprint();
-  }
 
   void _toggleSearch() {
     setState(() {
@@ -87,6 +70,7 @@ class _HomePageState extends State<HomePage> {
       });
     }
   }
+  
 
   List<Map<String, dynamic>> students = [];
   final studentList = Hive.box("student_list");
@@ -122,7 +106,7 @@ class _HomePageState extends State<HomePage> {
             'age': _ageController.text,
             'number': _numberController.text,
             'address': _addressController.text,
-          });
+          } as StudentModel);
         }
 
         if (itemKey != null) {
@@ -131,11 +115,14 @@ class _HomePageState extends State<HomePage> {
             "age": _ageController.text,
             "number": _numberController.text,
             "address": _addressController.text,
-          });
+          } as StudentModel);
         }
       },
     );
   }
+  
+
+  
 
   @override
   Widget build(BuildContext context) {

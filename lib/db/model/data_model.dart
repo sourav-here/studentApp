@@ -23,5 +23,9 @@ class StudentModel {
       required this.age,
       required this.number,
       required this.address,
-      this.image});
+      this.image, required key});
+
+  toJson() {}
+
+  toMap() {}
 }
