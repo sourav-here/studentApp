@@ -6,7 +6,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:student_list/db/functions/db_functions.dart';
 import 'package:student_list/db/model/data_model.dart';
 
-// ignore: must_be_immutable
 class EditScreen extends StatefulWidget {
   EditScreen(
       {super.key,
