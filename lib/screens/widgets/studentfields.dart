@@ -1,195 +1,300 @@
 import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
-class BottomSheetWidget {
-  static void show(
-    BuildContext context,
-    File? image,
-    Function setImage,
-    Function getImageFromGallery,
-    TextEditingController nameController,
-    TextEditingController ageController,
-    TextEditingController numberController,
-    TextEditingController addressController,
-    GlobalKey<FormState> formKey,
-    Function saveOrUpdateStudent,
-  ) {
-    showModalBottomSheet(
-      isScrollControlled: true,
-      context: context,
-      elevation: 5,
-      builder: (_) => Container(
-        key: formKey,
-        decoration: const BoxDecoration(
-          borderRadius: BorderRadius.only(
-            topRight: Radius.circular(30.0),
-            topLeft: Radius.circular(30.0),
-          ),
-          color: Color.fromARGB(255, 79, 244, 79),
-        ),
-        height: 750,
-        child: Form(
-          key: formKey,
-          child: Column(
-            children: [
-              const SizedBox(
-                height: 15,
-              ),
-              CircleAvatar(
-                radius: 70,
-                backgroundImage: image != null ? FileImage(image) : null,
-                child: image == null
-                    ? const Icon(
-                        Icons.person,
-                        size: 70,
-                      )
-                    : null,
-              ),
-              const Positioned(
-                child: IconButton(
-                  onPressed: null,
-                  icon: Icon(Icons.add_a_photo),
-                ),
-              ),
-              const SizedBox(
-                height: 15,
-              ),
-              TextFormField(
-                keyboardType: TextInputType.name,
-                inputFormatters: <TextInputFormatter>[
-                  FilteringTextInputFormatter(RegExp(r'[a-zA-Z]'), allow: true),
-                ],
-                controller: nameController,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  hintText: 'Name',
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Enter Name';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              TextFormField(
-                keyboardType: TextInputType.number,
-                inputFormatters: <TextInputFormatter>[
-                  FilteringTextInputFormatter.digitsOnly,
-                ],
-                controller: ageController,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  hintText: 'Age',
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Enter Age';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              TextFormField(
-                keyboardType: TextInputType.phone,
-                inputFormatters: <TextInputFormatter>[
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(10),
-                ],
-                controller: numberController,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  hintText: 'Phone',
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Enter Phone number';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              TextFormField(
-                controller: addressController,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: const BorderSide(
-                      color: Colors.black,
-                      width: 50,
-                    ),
-                  ),
-                  hintText: 'Address',
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Enter Address';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(
-                height: 30,
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  shape: const StadiumBorder(),
-                  minimumSize: const Size(120, 45),
-                  backgroundColor: Colors.black,
-                ),
-                onPressed: () async {
-                  if (formKey.currentState!.validate()) {
-                    saveOrUpdateStudent();
-                    nameController.text = '';
-                    ageController.text = '';
-                    numberController.text = '';
-                    addressController.text = '';
-                    Navigator.of(context).pop();
-                  }
-                },
-                child: const Text(
-                  'Save',
-                  style: TextStyle(
-                    fontStyle: FontStyle.italic,
-                    fontSize: 20,
-                    color: Color.fromARGB(255, 79, 244, 79),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 15),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  shape: const StadiumBorder(),
-                  minimumSize: const Size(120, 45),
-                  backgroundColor: Colors.black,
-                ),
-                onPressed: () => Navigator.pop(context),
-                child: const Text(
-                  'Back',
-                  style: TextStyle(
-                    fontStyle: FontStyle.italic,
-                    fontSize: 20,
-                    color: Color.fromARGB(255, 79, 244, 79),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+import 'package:flutter/material.dart';
+import 'package:hive_flutter/adapters.dart';
+import 'package:student_list/db/functions/db_functions.dart';
+import 'package:student_list/db/model/data_model.dart';
+import 'package:student_list/screens/widgets/editpage.dart';
+import 'package:student_list/screens/widgets/studentdetails.dart';
+
+class StudentUi extends StatefulWidget {
+  const StudentUi({super.key});
+
+  @override
+  State<StudentUi> createState() => _ListUiState();
+}
+
+class _ListUiState extends State<StudentUi> {
+  final _searchController = TextEditingController();
+  String search = '';
+  bool isDeleted = false;
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+        future: Hive.openBox('studentList'),
+        builder: (ctx, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            final allStudents = Hive.box('studentList');
+            return ValueListenableBuilder(
+                valueListenable: Hive.box('studentList').listenable(),
+                builder: (ctx, Box box, child) {
+                  return Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(
+                            top: 10, left: 30, right: 30, bottom: 5),
+                        child: TextFormField(
+                          controller: _searchController,
+                          onChanged: (String? value) {
+                            setState(() {
+                              search = value.toString();
+                            });
+                          },
+                          style: const TextStyle(
+                              color:  Color.fromARGB(255, 79, 244, 79)),
+                          cursorColor: const Color.fromARGB(255, 79, 244, 79),
+                          decoration: const InputDecoration(
+                              focusedBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.white)),
+                              labelText: 'Search',
+                              labelStyle: TextStyle(color: Colors.white),
+                              suffixIcon: Icon(
+                                Icons.search,
+                                color: Colors.white,
+                              )),
+                        ),
+                      ),
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: allStudents.length,
+                          itemBuilder: (context, index) {
+                            final data =
+                                allStudents.getAt(index) as StudentModel;
+                            late String position = data.name.toString();
+                            if (_searchController.text.isEmpty) {
+                              return InkWell(
+                                onTap: () {
+                                  Navigator.of(context).push(MaterialPageRoute(
+                                      builder: (context) => DisplayStudentDetails(
+                                            name: data.name!,
+                                            age: data.age.toString(),
+                                            address: data.address,
+                                            number: data.number.toString(),
+                                            // imagePath: data.image!,
+                                          )));
+                                },
+                                child: ListTile(
+                                  leading: CircleAvatar(
+                                      backgroundImage: data.image != null
+                                          ? FileImage(File(data.image!))
+                                          : const AssetImage(
+                                                  'assets/user-3296.png')
+                                              as ImageProvider),
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                          onPressed: () {
+                                            Navigator.of(context).push(
+                                                MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        EditScreen(
+                                                          index: index,
+                                                          name: data.name!,
+                                                          age: data.age,
+                                                          number: data.number,
+                                                          address: data.address,
+                                                          imagePath: data.image,
+                                                        )));
+                                          },
+                                          icon: const Icon(
+                                            Icons.edit,
+                                            color: Color.fromARGB(255, 79, 244, 79),
+                                          )),
+                                      IconButton(
+                                          onPressed: () {
+                                            showDialog(
+                                                context: context,
+                                                useSafeArea: true,
+                                                builder: (context) =>
+                                                    AlertDialog(
+                                                      scrollable: true,
+                                                      title:
+                                                          const Text('Delete'),
+                                                      content: const Text(
+                                                          'Confirm?'),
+                                                      actions: [
+                                                        ElevatedButton(
+                                                            style: ElevatedButton
+                                                                .styleFrom(
+                                                                    backgroundColor:
+                                                                        const Color
+                                                                            .fromARGB(255, 79, 244, 79)),
+                                                            onPressed: () {
+                                                              deleteStudent(
+                                                                  index);
+                                                              isDeleted = true;
+                                                              if (isDeleted ==
+                                                                  true) {
+                                                                Navigator.pop(
+                                                                    context);
+                                                              }
+                                                            },
+                                                            child: const Text(
+                                                              "OK",
+                                                              style: TextStyle(
+                                                                  color: Colors
+                                                                      .white),
+                                                            )),
+                                                        TextButton(
+                                                            onPressed: () {
+                                                              Navigator.pop(
+                                                                  context);
+                                                            },
+                                                            child: const Text(
+                                                              'NO',
+                                                              style: TextStyle(
+                                                                  color: Color.fromARGB(255, 79, 244, 79)
+                                                                      ),
+                                                            ))
+                                                      ],
+                                                    ));
+                                          },
+                                          icon: const Icon(
+                                            Icons.delete,
+                                            color: Color.fromARGB(255, 79, 244, 79),
+                                          )),
+                                    ],
+                                  ),
+                                  title: Padding(
+                                    padding: const EdgeInsets.only(top: 10),
+                                    child: Text(data.name!,style: const TextStyle(color: Color.fromARGB(255, 79, 244, 79)),),
+                                  ),
+                                  subtitle: Padding(
+                                    padding: const EdgeInsets.only(left: 10),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(style: const TextStyle(color: Color.fromARGB(255, 79, 244, 79)),data.age.toString()),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            } else if (position.toLowerCase().contains(
+                                _searchController.text.toLowerCase())) {
+                              return InkWell(
+                                onTap: () {
+                                  Navigator.of(context).push(MaterialPageRoute(
+                                      builder: (context) =>
+                                          DisplayStudentDetails(
+                                            name: data.name!,
+                                            age: data.age.toString(),
+                                            address: data.address,
+                                            number: data.number.toString(),
+                                            // imagePath: data.image!,
+                                          )));
+                                },
+                                child: ListTile(
+                                  leading: CircleAvatar(
+                                      backgroundImage: data.image != null
+                                          ? FileImage(File(data.image!))
+                                          : const AssetImage(
+                                                  'assets/user-3296.png')
+                                              as ImageProvider),
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                          onPressed: () {
+                                            Navigator.of(context).push(
+                                                MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        EditScreen(
+                                                          index: index,
+                                                          name: data.name!,
+                                                          age: data.age,
+                                                          number: data.number,
+                                                          address: data.address,
+                                                          imagePath: data.image,
+                                                        )));
+                                          },
+                                          icon: const Icon(
+                                            Icons.edit,
+                                            color: Color.fromARGB(255, 79, 244, 79)
+                                          )),
+                                      IconButton(
+                                          onPressed: () {
+                                            showDialog(
+                                                context: context,
+                                                useSafeArea: true,
+                                                builder: (context) =>
+                                                    AlertDialog(
+                                                      scrollable: true,
+                                                      title:
+                                                          const Text('Delete'),
+                                                      content: const Text(
+                                                          'Confirm?'),
+                                                      actions: [
+                                                        ElevatedButton(
+                                                            style: ElevatedButton
+                                                                .styleFrom(
+                                                                    backgroundColor:
+                                                                        Colors
+                                                                            .grey),
+                                                            onPressed: () {
+                                                              deleteStudent(
+                                                                  index);
+                                                              isDeleted = true;
+                                                              if (isDeleted ==
+                                                                  true) {
+                                                                Navigator.pop(
+                                                                    context);
+                                                              }
+                                                            },
+                                                            child: const Text(
+                                                              "Ok",
+                                                              style: TextStyle(
+                                                                  color: Colors
+                                                                      .white),
+                                                            )),
+                                                        TextButton(
+                                                            onPressed: () {
+                                                              Navigator.pop(
+                                                                  context);
+                                                            },
+                                                            child: const Text(
+                                                                'No'))
+                                                      ],
+                                                    ));
+                                          },
+                                          icon: const Icon(
+                                            Icons.delete,
+                                            color: Color.fromARGB(255, 79, 244, 79),
+                                          )),
+                                    ],
+                                  ),
+                                  title: Padding(
+                                    padding: const EdgeInsets.only(top: 10),
+                                    child: Text(position),
+                                  ),
+                                  subtitle: Padding(
+                                    padding: const EdgeInsets.only(left: 10),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text('age: ${data.age.toString()}'),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            } else {
+                              return Container();
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+                });
+          } else {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+        });
   }
 }

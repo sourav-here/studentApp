@@ -23,6 +23,7 @@ class DisplayStudentDetails extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: const Color.fromARGB(255, 79, 244, 79),
         title: const Center(child: Text("D E T A I L S")),
       ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:student_list/db/model/data_model.dart';
-import 'package:student_list/screens/widgets/studentfunctions.dart';
+import 'package:student_list/screens/widgets/studentaddpage.dart';
 
 Future <void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
